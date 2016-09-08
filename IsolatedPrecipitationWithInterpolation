@@ -1,0 +1,29 @@
+function [x,t,l]=IsoPrecWithPoly(x0,n,t0,fin) % ...fin,beta) 
+% x0=[CO3(t0);Ca(t0);CaCO3(t0)], n=# grid points, [t0,fin]=time grid
+% beta=lower domain of polynomial component of precipitation DE
+tic
+
+x(:,1)=x0;      % set first column of z to initial data
+t=zeros(1,n);   % initialize time vector
+t(1)=t0;        
+
+mesh=fin/n;
+% f=@(y) -3.015e-15.*x.^2+1.815e-09.*x-7.723e-07; % [CO3(2-)]  
+
+for j=2:n+1;
+    t(j)=t(j-1)+mesh;
+    f=@(c) -3.015e-15.*c.^2+1.815e-9.*c-7.723e-07; % [CO3(2-)] 
+    c=f(t(j))-f(t(j-1));
+    x(1,j)=x(1,j-1)+c;             % Model of CO3(2-)'s fast Rx change
+    x(2,j)=x(2,j-1);               % Ca(2+) doesn't participate in fast Rx
+    x(3,j)=x(3,j-1);               % CaCO3 doesn't participate in fast Rx
+    PolyUpd=SolvePolyPrec(x(:,j),t(j),mesh);
+    
+    for i=1:3
+        x(i,j)=PolyUpd(i);
+    end
+end
+
+toc
+l=toc;
+end
